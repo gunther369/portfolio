@@ -1,6 +1,9 @@
 (function () {
   const cfg = window.PORTFOLIO_CONFIG || {};
   const overrides = cfg.projectOverrides || {};
+  const hiddenRepoNames = new Set(
+    (cfg.hiddenRepos || []).map((n) => String(n).trim()).filter(Boolean)
+  );
 
   const $ = (id) => document.getElementById(id);
 
@@ -107,7 +110,7 @@
       liveUrl: liveUrl || null,
       pagesIsGuess: !o.liveUrl && !!liveUrl,
       featured: !!o.featured,
-      hidden: !!o.hidden,
+      hidden: !!o.hidden || hiddenRepoNames.has(repo.name),
     };
   }
 

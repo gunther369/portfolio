@@ -3,6 +3,7 @@
  * - Add resume.pdf next to index.html for the embedded resume.
  * - Set your GitHub username; repos are fetched from the public API.
  * - Use projectOverrides to set live demo URLs, hide repos, or pin descriptions.
+ * - Use hiddenRepos for repo names to exclude without a full override block.
  */
 window.PORTFOLIO_CONFIG = {
   name: "Gunasagar Pullamchetty",
@@ -12,13 +13,16 @@ window.PORTFOLIO_CONFIG = {
 
   githubUsername: "gunther369",
 
+  /** Repo names to never show (e.g. this site, course templates). Forks are always hidden in the UI. */
+  hiddenRepos: ["portfolio", "skills-copilot-codespaces-vscode", "amdocs_git", "amdocs_git2", "DevOps"],
+
   social: {
     github: "https://github.com/gunther369",
-    linkedin: "",
-    email: "",
+    linkedin: "https://in.linkedin.com/in/gunasagarpullamchetty/",
+    email: "gunasagar.pullamchetty@amdocs.com",
   },
 
-  /** Map repo name (string) to options */
+  /** Map repo name (string) to options; `hidden: true` also hides a single repo. */
   projectOverrides: {
     // Example:
     // "my-app": {
