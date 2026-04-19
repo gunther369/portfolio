@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Portfolio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <header class="site-header">
+      <a class="logo" href="#">portfolio</a>
+      <nav class="nav">
+        <a href="#resume">Resume</a>
+        <a href="#projects">Projects</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" id="top">
+        <p class="hero-kicker">Hello —</p>
+        <h1 class="hero-name" id="hero-name">Your Name</h1>
+        <p class="hero-title" id="hero-title">Software Developer</p>
+        <p class="hero-tagline" id="hero-tagline"></p>
+        <div class="hero-actions" id="hero-social"></div>
+      </section>
+
+      <section class="section" id="resume">
+        <div class="section-head">
+          <h2>Resume</h2>
+          <p class="section-lead">
+            View inline or download. Place <code>resume.pdf</code> in this folder
+            next to <code>index.html</code>.
+          </p>
+        </div>
+        <div class="resume-toolbar">
+          <a class="btn btn-primary" id="resume-download" href="resume.pdf" download>
+            Download PDF
+          </a>
+          <span class="resume-status" id="resume-status"></span>
+        </div>
+        <div class="resume-frame-wrap">
+          <iframe
+            id="resume-frame"
+            class="resume-frame"
+            title="Resume PDF"
+            src="about:blank"
+          ></iframe>
+        </div>
+      </section>
+
+      <section class="section" id="projects">
+        <div class="section-head">
+          <h2>GitHub projects</h2>
+          <p class="section-lead">
+            Pulled from the public GitHub API. Configure live demos and overrides in
+            <code>config.js</code>.
+          </p>
+        </div>
+        <p class="projects-error" id="projects-error" hidden></p>
+        <div class="projects-grid" id="projects-grid"></div>
+      </section>
+
+      <section class="section section-demo" id="demo">
+        <div class="section-head">
+          <h2>Live demo</h2>
+          <p class="section-lead">
+            Select a project with a demo URL, or paste any URL below to preview it
+            here (sites that block iframes may not load).
+          </p>
+        </div>
+        <div class="demo-bar">
+          <input
+            type="url"
+            id="demo-url"
+            class="demo-url-input"
+            placeholder="https://username.github.io/repo/"
+            autocomplete="url"
+          />
+          <button type="button" class="btn btn-primary" id="demo-load">Load</button>
+        </div>
+        <div class="demo-frame-wrap">
+          <iframe
+            id="demo-frame"
+            class="demo-frame"
+            title="Project demo"
+            src="about:blank"
+          ></iframe>
+          <p class="demo-empty" id="demo-empty">
+            No demo loaded yet. Click “Open demo” on a project card or enter a URL
+            above.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span id="footer-built"></span>
+    </footer>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
