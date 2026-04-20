@@ -24,6 +24,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Cache public repos (avoids browser GitHub API rate limits)
+        run: |
+          set -euo pipefail
+          USER=$(node -p 'require("fs").readFileSync("config.js","utf8").match(/githubUsername\s*:\s*"([^"]+)"/)[1]')
+          curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            -H "User-Agent: portfolio-pages-deploy" \
+            "https://api.github.com/users/${USER}/repos?per_page=100&sort=updated" \
+            -o repos.json
+          test -s repos.json
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:

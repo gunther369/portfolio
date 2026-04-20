@@ -235,6 +235,13 @@ main {
   background: var(--bg-elevated);
 }
 
+.btn.is-disabled,
+a.btn.is-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
 .resume-frame-wrap {
   margin-top: 1rem;
   border: 1px solid var(--border);
@@ -259,6 +266,13 @@ main {
   background: rgba(220, 80, 80, 0.12);
   color: #f0a8a8;
   font-size: 0.9rem;
+}
+
+.projects-loading {
+  margin: 0;
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.95rem;
 }
 
 .projects-grid {

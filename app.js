@@ -21,8 +21,15 @@
   }
 
   function initHero() {
+    const titleEl = $("hero-title");
+    const titleFromHtml = titleEl?.textContent?.trim() || "";
     setText("hero-name", cfg.name || "Your Name");
-    setText("hero-title", cfg.title || "");
+    setText(
+      "hero-title",
+      cfg.title != null && String(cfg.title).trim() !== ""
+        ? cfg.title
+        : titleFromHtml || "Software Developer"
+    );
     setText("hero-tagline", cfg.tagline || "");
 
     const social = $("hero-social");
@@ -47,41 +54,67 @@
       .join("");
   }
 
-  function initResume() {
+  async function initResume() {
     const frame = $("resume-frame");
     const status = $("resume-status");
     const download = $("resume-download");
     if (!frame || !status) return;
 
     const pdfUrl = "resume.pdf";
-    frame.src = pdfUrl;
+    let pdfOk = false;
+    try {
+      const headRes = await fetch(pdfUrl, { method: "HEAD" });
+      pdfOk = headRes.ok;
+    } catch {
+      pdfOk = false;
+    }
 
-    let settled = false;
-    const timer = setTimeout(() => {
-      if (!settled) {
-        status.textContent =
-          "If the preview is blank, open the PDF directly or check the file name is resume.pdf";
-      }
-    }, 2500);
+    if (pdfOk) {
+      frame.src = pdfUrl;
+      let settled = false;
+      const timer = setTimeout(() => {
+        if (!settled) status.textContent = "";
+      }, 2500);
 
-    frame.addEventListener("load", () => {
-      settled = true;
-      clearTimeout(timer);
-      status.textContent = "Preview loads from resume.pdf in this folder.";
-    });
+      frame.addEventListener("load", () => {
+        settled = true;
+        clearTimeout(timer);
+        status.textContent = "";
+      });
 
-    frame.addEventListener("error", () => {
-      settled = true;
-      clearTimeout(timer);
+      frame.addEventListener("error", () => {
+        settled = true;
+        clearTimeout(timer);
+        status.textContent = "Resume could not be displayed.";
+      });
+    } else {
+      frame.src = "about:blank";
       status.textContent =
-        "Could not load resume.pdf — add your file or use Download once it exists.";
-    });
+        "Add resume.pdf next to index.html to show and download your resume.";
+    }
 
     if (download) {
-      download.addEventListener("click", (e) => {
-        fetch(pdfUrl, { method: "HEAD" }).then((r) => {
-          if (!r.ok) e.preventDefault();
-        });
+      if (!pdfOk) {
+        download.classList.add("is-disabled");
+        download.setAttribute("aria-disabled", "true");
+      }
+      download.addEventListener("click", async (e) => {
+        e.preventDefault();
+        try {
+          const r = await fetch(pdfUrl, { method: "HEAD" });
+          if (!r.ok) {
+            status.textContent = "Resume PDF not found.";
+            return;
+          }
+          const a = document.createElement("a");
+          a.href = pdfUrl;
+          a.download = "resume.pdf";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        } catch {
+          status.textContent = "Could not download resume.";
+        }
       });
     }
   }
@@ -121,6 +154,13 @@
     return tb - ta;
   }
 
+  function showProjectsLoading() {
+    const grid = $("projects-grid");
+    if (!grid) return;
+    grid.innerHTML =
+      '<p class="section-lead projects-loading" role="status">Loading projects…</p>';
+  }
+
   function renderProjects(repos) {
     const grid = $("projects-grid");
     const errEl = $("projects-error");
@@ -131,7 +171,7 @@
 
     if (!list.length) {
       grid.innerHTML =
-        '<p class="section-lead" style="margin:0">No public repositories found for this username.</p>';
+        '<p class="section-lead" style="margin:0">No projects to show.</p>';
       return;
     }
 
@@ -144,10 +184,10 @@
         const demoBtn = r.liveUrl
           ? `<button type="button" class="btn btn-primary btn-open-demo" data-demo-url="${escapeHtml(r.liveUrl)}">Open demo</button>${
               r.pagesIsGuess
-                ? ` <span class="project-meta" title="URL follows GitHub Pages convention; override in config.js if different">(Pages?)</span>`
+                ? ` <span class="project-meta" title="Demo URL inferred from the repository">(Pages?)</span>`
                 : ""
             }`
-          : `<button type="button" class="btn btn-ghost" disabled title="Set liveUrl in config.js for this repo">No demo URL</button>`;
+          : `<button type="button" class="btn btn-ghost" disabled title="No live demo for this project">No demo URL</button>`;
 
         return `<article class="project-card${r.featured ? " featured" : ""}">
           <div class="project-top">
@@ -216,13 +256,29 @@
     });
   }
 
+  async function loadReposFromStatic() {
+    const errEl = $("projects-error");
+    try {
+      const res = await fetch("repos.json", { cache: "no-store" });
+      if (!res.ok) return false;
+      const data = await res.json();
+      if (!Array.isArray(data)) return false;
+      const merged = data.map(mergeRepo);
+      renderProjects(merged);
+      if (errEl) errEl.hidden = true;
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async function loadGithubRepos() {
     const errEl = $("projects-error");
     const username = (cfg.githubUsername || "").trim();
     if (!username) {
       if (errEl) {
         errEl.hidden = false;
-        errEl.textContent = "Set githubUsername in config.js to load repositories.";
+        errEl.textContent = "Set githubUsername in config.js to load projects.";
       }
       return;
     }
@@ -230,12 +286,20 @@
     const api = `https://api.github.com/users/${encodeURIComponent(username)}/repos?per_page=100&sort=updated`;
 
     try {
-      const res = await fetch(api, { headers: { Accept: "application/vnd.github+json" } });
+      const res = await fetch(api, {
+        headers: {
+          Accept: "application/vnd.github+json",
+        },
+      });
       if (!res.ok) {
-        const msg =
-          res.status === 404
-            ? `GitHub user “${username}” was not found.`
-            : `GitHub API error (${res.status}). Try again later or check rate limits.`;
+        const remaining = res.headers.get("x-ratelimit-remaining");
+        const isRateLimited =
+          res.status === 403 && remaining === "0";
+        const msg = isRateLimited
+          ? "GitHub API rate limit reached in the browser. Redeploy the site so repos.json is included, or try again later."
+          : res.status === 404
+            ? "That GitHub profile could not be found."
+            : "Projects could not be loaded. Try again later.";
         throw new Error(msg);
       }
       const data = await res.json();
@@ -250,16 +314,26 @@
     }
   }
 
+  async function loadProjects() {
+    showProjectsLoading();
+    const errEl = $("projects-error");
+    if (errEl) errEl.hidden = true;
+    const fromStatic = await loadReposFromStatic();
+    if (!fromStatic) await loadGithubRepos();
+  }
+
   function initFooter() {
     const el = $("footer-built");
     if (el) {
-      el.textContent = `GitHub: ${cfg.githubUsername || "—"} · Built as static HTML`;
+      const y = new Date().getFullYear();
+      const n = (cfg.name || "").trim();
+      el.textContent = n ? `© ${y} ${n}` : `© ${y}`;
     }
   }
 
   initHero();
-  initResume();
+  void initResume();
   initDemoPanel();
   initFooter();
-  loadGithubRepos();
+  void loadProjects();
 })();
