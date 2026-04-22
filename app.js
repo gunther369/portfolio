@@ -199,51 +199,6 @@
       .join("");
   }
 
-  function loadDemo(url) {
-    const frame = $("demo-frame");
-    const input = $("demo-url");
-    if (!frame) return;
-    try {
-      const u = new URL(url);
-      if (u.protocol !== "http:" && u.protocol !== "https:") return;
-      frame.classList.remove("is-visible");
-      frame.src = u.toString();
-      if (input) input.value = u.toString();
-    } catch {
-      /* ignore */
-    }
-  }
-
-  function initDemoPanel() {
-    const input = $("demo-url");
-    const loadBtn = $("demo-load");
-    const frame = $("demo-frame");
-
-    loadBtn?.addEventListener("click", () => {
-      const raw = input?.value?.trim();
-      if (raw) loadDemo(raw);
-    });
-
-    input?.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        const raw = input.value.trim();
-        if (raw) loadDemo(raw);
-      }
-    });
-
-    frame?.addEventListener("load", () => {
-      try {
-        const src = frame.getAttribute("src") || frame.src || "";
-        if (src && !src.endsWith("about:blank") && frame.src !== "about:blank") {
-          frame.classList.add("is-visible");
-        }
-      } catch {
-        /* ignore */
-      }
-    });
-  }
-
   async function loadReposFromStatic() {
     const errEl = $("projects-error");
     try {
@@ -321,7 +276,6 @@
 
   initHero();
   void initResume();
-  initDemoPanel();
   initFooter();
   void loadProjects();
 })();
