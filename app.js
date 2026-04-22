@@ -135,13 +135,11 @@
       name: repo.name,
       htmlUrl: repo.html_url,
       description: o.description ?? repo.description ?? "",
-      language: repo.language,
       stars: repo.stargazers_count,
       pushedAt: repo.pushed_at,
       archived: repo.archived,
       fork: repo.fork,
       liveUrl: liveUrl || null,
-      pagesIsGuess: !o.liveUrl && !!liveUrl,
       featured: !!o.featured,
       hidden: !!o.hidden || hiddenRepoNames.has(repo.name),
     };
@@ -177,22 +175,19 @@
 
     grid.innerHTML = list
       .map((r) => {
-        const meta = [r.language, r.stars != null ? `★ ${r.stars}` : ""]
-          .filter(Boolean)
-          .join(" · ");
+        const meta = r.stars != null ? `★ ${r.stars}` : "";
+        const metaHtml = meta
+          ? `<span class="project-meta">${escapeHtml(meta)}</span>`
+          : "";
         const desc = escapeHtml(r.description || "No description.");
         const demoBtn = r.liveUrl
-          ? `<button type="button" class="btn btn-primary btn-open-demo" data-demo-url="${escapeHtml(r.liveUrl)}">Open demo</button>${
-              r.pagesIsGuess
-                ? ` <span class="project-meta" title="Demo URL inferred from the repository">(Pages?)</span>`
-                : ""
-            }`
+          ? `<a class="btn btn-primary" href="${escapeHtml(r.liveUrl)}" target="_blank" rel="noopener noreferrer">Open demo</a>`
           : `<button type="button" class="btn btn-ghost" disabled title="No live demo for this project">No demo URL</button>`;
 
         return `<article class="project-card${r.featured ? " featured" : ""}">
           <div class="project-top">
             <h3 class="project-name"><a href="${escapeHtml(r.htmlUrl)}" rel="noopener noreferrer" target="_blank">${escapeHtml(r.name)}</a></h3>
-            <span class="project-meta">${escapeHtml(meta)}</span>
+            ${metaHtml}
           </div>
           <p class="project-desc">${desc}</p>
           <div class="project-actions">
@@ -202,13 +197,6 @@
         </article>`;
       })
       .join("");
-
-    grid.querySelectorAll(".btn-open-demo").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const url = btn.getAttribute("data-demo-url");
-        if (url) loadDemo(url);
-      });
-    });
   }
 
   function loadDemo(url) {
