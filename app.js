@@ -274,8 +274,151 @@
     }
   }
 
+  /** Penner ease-out-back: slight overshoot then settle (clamped when applied to scroll). */
+  function easeOutBack(t) {
+    const c1 = 1.525;
+    const c3 = c1 + 1;
+    const x = t - 1;
+    return 1 + c3 * x * x * x + c1 * x * x;
+  }
+
+  function maxScrollY() {
+    const root = document.documentElement;
+    return Math.max(0, root.scrollHeight - window.innerHeight);
+  }
+
+  function elasticScrollTo(targetY) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      window.scrollTo({ top: targetY, behavior: "smooth" });
+      return;
+    }
+    const start = window.scrollY;
+    const maxS = maxScrollY();
+    const end = Math.max(0, Math.min(maxS, targetY));
+    const t0 = performance.now();
+    const duration = 880;
+
+    function step(now) {
+      const t = Math.min(1, (now - t0) / duration);
+      const e = easeOutBack(t);
+      const y = start + (end - start) * e;
+      window.scrollTo(0, Math.max(0, Math.min(maxS, y)));
+      if (t < 1) requestAnimationFrame(step);
+      else window.scrollTo(0, end);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function initElasticNavScroll() {
+    document.addEventListener("click", (e) => {
+      const a = e.target.closest("a");
+      if (!a) return;
+      const href = a.getAttribute("href");
+      if (href == null || !href.startsWith("#")) return;
+
+      if (href === "#") {
+        e.preventDefault();
+        elasticScrollTo(0);
+        const path = window.location.pathname + window.location.search;
+        history.replaceState(null, "", path);
+        return;
+      }
+
+      const id = decodeURIComponent(href.slice(1));
+      if (!id) return;
+      const el = document.getElementById(id);
+      if (!el) return;
+
+      e.preventDefault();
+      const header = document.querySelector(".site-header");
+      const off = header ? header.offsetHeight + 10 : 16;
+      const top = el.getBoundingClientRect().top + window.scrollY - off;
+      elasticScrollTo(top);
+      history.pushState(null, "", href);
+    });
+  }
+
+  function initOverscrollElastic() {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const main = document.querySelector("main");
+    if (!main) return;
+
+    const maxPull = 76;
+    const wheelGain = 0.085;
+    const touchGain = 0.22;
+    let pull = 0;
+    let rafId = 0;
+
+    function tick() {
+      pull *= 0.86;
+      if (Math.abs(pull) < 0.35) {
+        pull = 0;
+        main.style.transform = "";
+        main.style.willChange = "auto";
+        rafId = 0;
+        return;
+      }
+      main.style.willChange = "transform";
+      main.style.transform = `translate3d(0, ${pull}px, 0)`;
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function bumpPull(delta) {
+      pull = Math.max(-maxPull, Math.min(maxPull, pull + delta));
+      main.style.willChange = "transform";
+      main.style.transform = `translate3d(0, ${pull}px, 0)`;
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(tick);
+    }
+
+    window.addEventListener(
+      "wheel",
+      (e) => {
+        const root = document.documentElement;
+        const atTop = window.scrollY <= 0;
+        const atBottom =
+          window.scrollY + window.innerHeight >= root.scrollHeight - 1;
+
+        if (atTop && e.deltaY < 0) bumpPull(-e.deltaY * wheelGain);
+        else if (atBottom && e.deltaY > 0) bumpPull(-e.deltaY * wheelGain);
+      },
+      { passive: true }
+    );
+
+    let touchLastY = 0;
+    window.addEventListener(
+      "touchstart",
+      (e) => {
+        if (e.touches.length === 1) touchLastY = e.touches[0].clientY;
+      },
+      { passive: true }
+    );
+
+    window.addEventListener(
+      "touchmove",
+      (e) => {
+        if (e.touches.length !== 1) return;
+        const root = document.documentElement;
+        const y = e.touches[0].clientY;
+        const dy = y - touchLastY;
+        touchLastY = y;
+
+        const atTop = window.scrollY <= 0;
+        const atBottom =
+          window.scrollY + window.innerHeight >= root.scrollHeight - 1;
+
+        if (atTop && dy > 0) bumpPull(dy * touchGain);
+        else if (atBottom && dy < 0) bumpPull(dy * touchGain);
+      },
+      { passive: true }
+    );
+  }
+
   initHero();
   void initResume();
   initFooter();
+  initElasticNavScroll();
+  initOverscrollElastic();
   void loadProjects();
 })();
