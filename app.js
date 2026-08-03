@@ -232,7 +232,8 @@
     const heroResume = $("hero-resume");
     if (!frame || !status) return;
 
-    const pdfUrl = "resume.pdf";
+    // Cache-bust so browsers don't keep an old placeholder PDF in the iframe.
+    const pdfUrl = "resume.pdf?v=gp-resume-2026-08-03";
     const downloadName = "Gunasagar_Pullamchetty_Resume.pdf";
     let pdfOk = false;
     try {
