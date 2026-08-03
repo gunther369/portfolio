@@ -30,9 +30,9 @@
       <a class="logo" href="#top" id="site-logo">GP</a>
       <nav class="nav">
         <a href="#about">About</a>
-        <a href="#experience">Experience</a>
-        <a href="#projects">Work</a>
         <a href="#resume">Resume</a>
+        <a href="#projects">Work</a>
+        <a href="#contact">Contact</a>
       </nav>
     </header>
 
@@ -53,18 +53,34 @@
         <p class="about-text" id="about-text"></p>
       </section>
 
-      <section class="section" id="experience">
+      <section class="section" id="resume">
         <div class="section-head">
-          <h2>Experience</h2>
+          <h2>Resume</h2>
+          <p class="section-lead">
+            On-page CV for quick scanning — download the PDF when you need an ATS copy.
+          </p>
         </div>
-        <div id="experience-list"></div>
-      </section>
-
-      <section class="section" id="skills">
-        <div class="section-head">
-          <h2>Skills</h2>
+        <div class="resume-toolbar">
+          <a
+            class="btn btn-primary"
+            id="resume-download"
+            href="resume.pdf"
+            download="Gunasagar_Pullamchetty_Resume.pdf"
+          >
+            Download PDF
+          </a>
+          <a
+            class="btn btn-ghost"
+            id="resume-open"
+            href="resume.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Open PDF
+          </a>
+          <span class="resume-status" id="resume-status"></span>
         </div>
-        <div class="skills-groups" id="skills-groups"></div>
+        <article class="resume-sheet" id="resume-sheet" aria-label="Resume"></article>
       </section>
 
       <section class="section" id="projects">
@@ -81,34 +97,6 @@
         </div>
         <p class="projects-error" id="projects-error" hidden></p>
         <div class="projects-grid" id="projects-grid" aria-live="polite"></div>
-      </section>
-
-      <section class="section" id="resume">
-        <div class="section-head">
-          <h2>Resume</h2>
-          <p class="section-lead">
-            Full CV as PDF — download for ATS-friendly review, or preview below.
-          </p>
-        </div>
-        <div class="resume-toolbar">
-          <a
-            class="btn btn-primary"
-            id="resume-download"
-            href="resume.pdf"
-            download="Gunasagar_Pullamchetty_Resume.pdf"
-          >
-            Download PDF
-          </a>
-          <span class="resume-status" id="resume-status"></span>
-        </div>
-        <div class="resume-frame-wrap">
-          <iframe
-            id="resume-frame"
-            class="resume-frame"
-            title="Resume PDF"
-            src="about:blank"
-          ></iframe>
-        </div>
       </section>
 
       <section class="section" id="contact">

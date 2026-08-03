@@ -36,6 +36,11 @@ jobs:
             -o repos.json
           test -s repos.json
 
+      - name: Fix resume PDF metadata for deploy
+        run: |
+          python3 -m pip install --quiet -r scripts/requirements.txt
+          python3 scripts/fix-resume-meta.py
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:

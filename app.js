@@ -56,8 +56,8 @@
     const actions = $("hero-actions");
     if (actions) {
       actions.innerHTML = [
-        `<a class="btn btn-primary" href="#projects">View work</a>`,
-        `<a class="btn btn-ghost" href="resume.pdf" id="hero-resume" download="Gunasagar_Pullamchetty_Resume.pdf">Download resume</a>`,
+        `<a class="btn btn-primary" href="#resume">View resume</a>`,
+        `<a class="btn btn-ghost" href="resume.pdf" id="hero-resume" download="Gunasagar_Pullamchetty_Resume.pdf">Download PDF</a>`,
       ].join("");
     }
 
@@ -80,54 +80,150 @@
     setText("about-text", cfg.about || "");
   }
 
-  function initExperience() {
-    const root = $("experience-list");
-    if (!root) return;
-    const jobs = Array.isArray(cfg.experience) ? cfg.experience : [];
-    if (!jobs.length) {
-      root.innerHTML =
-        '<p class="section-lead">Add experience entries in config.js.</p>';
-      return;
+  function resumeContactLine() {
+    const parts = [];
+    if (cfg.location) parts.push(escapeHtml(cfg.location));
+    if (cfg.social?.email) {
+      parts.push(
+        `<a href="mailto:${escapeHtml(cfg.social.email)}">${escapeHtml(cfg.social.email)}</a>`
+      );
     }
+    if (cfg.phone) parts.push(escapeHtml(cfg.phone));
+    if (cfg.social?.linkedin) {
+      parts.push(
+        `<a href="${escapeHtml(cfg.social.linkedin)}" target="_blank" rel="noopener noreferrer">LinkedIn</a>`
+      );
+    }
+    if (cfg.social?.github) {
+      parts.push(
+        `<a href="${escapeHtml(cfg.social.github)}" target="_blank" rel="noopener noreferrer">GitHub</a>`
+      );
+    }
+    return parts.join('<span class="resume-sep" aria-hidden="true"> · </span>');
+  }
 
-    root.innerHTML = jobs
+  function initResumeSheet() {
+    const sheet = $("resume-sheet");
+    if (!sheet) return;
+
+    const jobs = Array.isArray(cfg.experience) ? cfg.experience : [];
+    const skillGroups = Array.isArray(cfg.skills) ? cfg.skills : [];
+    const education = Array.isArray(cfg.education) ? cfg.education : [];
+    const certs = Array.isArray(cfg.certifications) ? cfg.certifications : [];
+    const accomplishments = Array.isArray(cfg.accomplishments)
+      ? cfg.accomplishments
+      : [];
+    const featured = Array.isArray(cfg.featuredProjects)
+      ? cfg.featuredProjects
+      : [];
+
+    const expHtml = jobs
       .map((job) => {
         const bullets = (job.bullets || [])
           .map((b) => `<li>${escapeHtml(b)}</li>`)
           .join("");
-        const meta = [job.period, job.location].filter(Boolean).join(" · ");
-        return `<article class="exp-card">
-          <div class="exp-top">
-            <h3 class="exp-role">${escapeHtml(job.role || "")}</h3>
-            <p class="exp-meta">${escapeHtml(meta)}</p>
+        return `<div class="rs-job">
+          <div class="rs-job-top">
+            <h3 class="rs-job-role">${escapeHtml(job.role || "")}</h3>
+            <span class="rs-job-period">${escapeHtml(job.period || "")}</span>
           </div>
-          <p class="exp-company">${escapeHtml(job.company || "")}</p>
-          <ul class="exp-bullets">${bullets}</ul>
-        </article>`;
-      })
-      .join("");
-  }
-
-  function initSkills() {
-    const root = $("skills-groups");
-    if (!root) return;
-    const groups = Array.isArray(cfg.skills) ? cfg.skills : [];
-    if (!groups.length) {
-      root.innerHTML = "";
-      return;
-    }
-
-    root.innerHTML = groups
-      .map((g) => {
-        const chips = (g.items || [])
-          .map((item) => `<span class="skill-chip">${escapeHtml(item)}</span>`)
-          .join("");
-        return `<div class="skill-group">
-          <h3 class="skill-group-title">${escapeHtml(g.group || "")}</h3>
-          <div class="skill-chips">${chips}</div>
+          <p class="rs-job-company">${escapeHtml(job.company || "")}${
+            job.location ? ` · ${escapeHtml(job.location)}` : ""
+          }</p>
+          <ul class="rs-list">${bullets}</ul>
         </div>`;
       })
       .join("");
+
+    const skillsHtml = skillGroups
+      .map((g) => {
+        const items = (g.items || []).map(escapeHtml).join(", ");
+        return `<p class="rs-skill-row"><span class="rs-skill-label">${escapeHtml(
+          g.group || ""
+        )}</span> ${items}</p>`;
+      })
+      .join("");
+
+    const eduHtml = education
+      .map(
+        (e) => `<div class="rs-block">
+          <div class="rs-job-top">
+            <h3 class="rs-job-role">${escapeHtml(e.school || "")}</h3>
+            <span class="rs-job-period">${escapeHtml(e.period || "")}</span>
+          </div>
+          <p class="rs-job-company">${escapeHtml(e.degree || "")}</p>
+          ${e.detail ? `<p class="rs-muted">${escapeHtml(e.detail)}</p>` : ""}
+        </div>`
+      )
+      .join("");
+
+    const certHtml = certs
+      .map(
+        (c) => `<li><strong>${escapeHtml(c.name || "")}</strong> — ${escapeHtml(
+          c.issuer || ""
+        )}${c.period ? ` · ${escapeHtml(c.period)}` : ""}</li>`
+      )
+      .join("");
+
+    const accHtml = accomplishments
+      .map((a) => `<li>${escapeHtml(a)}</li>`)
+      .join("");
+
+    const projHtml = featured
+      .map((p) => {
+        const tech = (p.tech || []).map(escapeHtml).join(", ");
+        return `<div class="rs-block">
+          <h3 class="rs-job-role">${escapeHtml(p.name || "")}</h3>
+          <p class="rs-muted">${escapeHtml(p.description || "")}</p>
+          ${tech ? `<p class="rs-tech">Tech: ${tech}</p>` : ""}
+        </div>`;
+      })
+      .join("");
+
+    sheet.innerHTML = `
+      <header class="rs-header">
+        <h2 class="rs-name">${escapeHtml(cfg.name || "")}</h2>
+        <p class="rs-title">${escapeHtml(cfg.title || "")}</p>
+        <p class="rs-contact">${resumeContactLine()}</p>
+      </header>
+      ${
+        cfg.summary
+          ? `<section class="rs-section"><h3 class="rs-h">Summary</h3><p class="rs-body">${escapeHtml(
+              cfg.summary
+            )}</p></section>`
+          : ""
+      }
+      ${
+        expHtml
+          ? `<section class="rs-section"><h3 class="rs-h">Experience</h3>${expHtml}</section>`
+          : ""
+      }
+      ${
+        skillsHtml
+          ? `<section class="rs-section"><h3 class="rs-h">Skills</h3>${skillsHtml}</section>`
+          : ""
+      }
+      ${
+        projHtml
+          ? `<section class="rs-section"><h3 class="rs-h">Selected projects</h3>${projHtml}</section>`
+          : ""
+      }
+      ${
+        eduHtml
+          ? `<section class="rs-section"><h3 class="rs-h">Education</h3>${eduHtml}</section>`
+          : ""
+      }
+      ${
+        certHtml
+          ? `<section class="rs-section"><h3 class="rs-h">Certifications</h3><ul class="rs-list">${certHtml}</ul></section>`
+          : ""
+      }
+      ${
+        accHtml
+          ? `<section class="rs-section"><h3 class="rs-h">Accomplishments</h3><ul class="rs-list">${accHtml}</ul></section>`
+          : ""
+      }
+    `;
   }
 
   function techChips(tech) {
@@ -226,13 +322,11 @@
   }
 
   async function initResume() {
-    const frame = $("resume-frame");
     const status = $("resume-status");
     const download = $("resume-download");
+    const openPdf = $("resume-open");
     const heroResume = $("hero-resume");
-    if (!frame || !status) return;
 
-    // Cache-bust so browsers don't keep an old placeholder PDF in the iframe.
     const pdfUrl = "resume.pdf?v=gp-resume-2026-08-03";
     const downloadName = "Gunasagar_Pullamchetty_Resume.pdf";
     let pdfOk = false;
@@ -243,28 +337,17 @@
       pdfOk = false;
     }
 
-    if (pdfOk) {
-      frame.src = pdfUrl;
-      let settled = false;
-      const timer = setTimeout(() => {
-        if (!settled) status.textContent = "";
-      }, 2500);
-
-      frame.addEventListener("load", () => {
-        settled = true;
-        clearTimeout(timer);
-        status.textContent = "";
-      });
-
-      frame.addEventListener("error", () => {
-        settled = true;
-        clearTimeout(timer);
-        status.textContent = "Resume could not be displayed.";
-      });
-    } else {
-      frame.src = "about:blank";
+    if (!pdfOk && status) {
       status.textContent =
-        "Add resume.pdf next to index.html to show and download your resume.";
+        "PDF not found — on-page resume above is still complete.";
+    }
+
+    if (openPdf) {
+      openPdf.href = pdfUrl;
+      if (!pdfOk) {
+        openPdf.classList.add("is-disabled");
+        openPdf.setAttribute("aria-disabled", "true");
+      }
     }
 
     function wireDownload(el) {
@@ -278,7 +361,7 @@
         try {
           const r = await fetch(pdfUrl, { method: "HEAD" });
           if (!r.ok) {
-            status.textContent = "Resume PDF not found.";
+            if (status) status.textContent = "Resume PDF not found.";
             return;
           }
           const a = document.createElement("a");
@@ -288,7 +371,7 @@
           a.click();
           a.remove();
         } catch {
-          status.textContent = "Could not download resume.";
+          if (status) status.textContent = "Could not download resume.";
         }
       });
     }
@@ -577,8 +660,7 @@
 
   initHero();
   initAbout();
-  initExperience();
-  initSkills();
+  initResumeSheet();
   initFeatured();
   initContact();
   void initResume();
