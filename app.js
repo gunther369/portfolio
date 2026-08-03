@@ -20,47 +20,220 @@
       .replace(/"/g, "&quot;");
   }
 
+  function initialsFromName(name) {
+    const parts = String(name || "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    if (!parts.length) return "GP";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
+  function socialLink(href, label) {
+    return `<a href="${escapeHtml(href)}" rel="noopener noreferrer" target="_blank">${escapeHtml(label)}</a>`;
+  }
+
   function initHero() {
-    const titleEl = $("hero-title");
-    const titleFromHtml = titleEl?.textContent?.trim() || "";
-    setText("hero-name", cfg.name || "Your Name");
+    const name = cfg.name || "Your Name";
+    const logo = $("site-logo");
+    if (logo) logo.textContent = initialsFromName(name);
+
+    setText("hero-name", name);
     setText(
       "hero-title",
       cfg.title != null && String(cfg.title).trim() !== ""
         ? cfg.title
-        : titleFromHtml || "Software Developer"
+        : "Java Backend Engineer"
     );
     setText("hero-tagline", cfg.tagline || "");
 
+    const kickerBits = [];
+    if (cfg.availability) kickerBits.push(cfg.availability);
+    if (cfg.location) kickerBits.push(cfg.location);
+    setText("hero-kicker", kickerBits.join(" · "));
+
+    const actions = $("hero-actions");
+    if (actions) {
+      actions.innerHTML = [
+        `<a class="btn btn-primary" href="#projects">View work</a>`,
+        `<a class="btn btn-ghost" href="resume.pdf" id="hero-resume" download="Gunasagar_Pullamchetty_Resume.pdf">Download resume</a>`,
+      ].join("");
+    }
+
     const social = $("hero-social");
-    if (!social) return;
+    if (social) {
+      const links = [];
+      if (cfg.social?.linkedin)
+        links.push(socialLink(cfg.social.linkedin, "LinkedIn"));
+      if (cfg.social?.github)
+        links.push(socialLink(cfg.social.github, "GitHub"));
+      if (cfg.social?.email)
+        links.push(
+          `<a href="mailto:${escapeHtml(cfg.social.email)}">Email</a>`
+        );
+      social.innerHTML = links.join("");
+    }
+  }
 
-    const links = [];
-    if (cfg.social?.github)
-      links.push({ href: cfg.social.github, label: "GitHub" });
-    if (cfg.social?.linkedin)
-      links.push({ href: cfg.social.linkedin, label: "LinkedIn" });
-    if (cfg.social?.email)
-      links.push({
-        href: `mailto:${cfg.social.email}`,
-        label: "Email",
-      });
+  function initAbout() {
+    setText("about-text", cfg.about || "");
+  }
 
-    social.innerHTML = links
-      .map(
-        (l) =>
-          `<a href="${escapeHtml(l.href)}" rel="noopener noreferrer" target="_blank">${escapeHtml(l.label)}</a>`
+  function initExperience() {
+    const root = $("experience-list");
+    if (!root) return;
+    const jobs = Array.isArray(cfg.experience) ? cfg.experience : [];
+    if (!jobs.length) {
+      root.innerHTML =
+        '<p class="section-lead">Add experience entries in config.js.</p>';
+      return;
+    }
+
+    root.innerHTML = jobs
+      .map((job) => {
+        const bullets = (job.bullets || [])
+          .map((b) => `<li>${escapeHtml(b)}</li>`)
+          .join("");
+        const meta = [job.period, job.location].filter(Boolean).join(" · ");
+        return `<article class="exp-card">
+          <div class="exp-top">
+            <h3 class="exp-role">${escapeHtml(job.role || "")}</h3>
+            <p class="exp-meta">${escapeHtml(meta)}</p>
+          </div>
+          <p class="exp-company">${escapeHtml(job.company || "")}</p>
+          <ul class="exp-bullets">${bullets}</ul>
+        </article>`;
+      })
+      .join("");
+  }
+
+  function initSkills() {
+    const root = $("skills-groups");
+    if (!root) return;
+    const groups = Array.isArray(cfg.skills) ? cfg.skills : [];
+    if (!groups.length) {
+      root.innerHTML = "";
+      return;
+    }
+
+    root.innerHTML = groups
+      .map((g) => {
+        const chips = (g.items || [])
+          .map((item) => `<span class="skill-chip">${escapeHtml(item)}</span>`)
+          .join("");
+        return `<div class="skill-group">
+          <h3 class="skill-group-title">${escapeHtml(g.group || "")}</h3>
+          <div class="skill-chips">${chips}</div>
+        </div>`;
+      })
+      .join("");
+  }
+
+  function techChips(tech) {
+    if (!tech || !tech.length) return "";
+    return `<div class="project-tech">${tech
+      .map((t) => `<span class="tech-chip">${escapeHtml(t)}</span>`)
+      .join("")}</div>`;
+  }
+
+  function projectCard(r, { featuredLayout } = {}) {
+    const meta =
+      r.stars != null && !featuredLayout
+        ? `<span class="project-meta">★ ${escapeHtml(String(r.stars))}</span>`
+        : featuredLayout
+          ? `<span class="project-badge">Featured</span>`
+          : "";
+    const desc = escapeHtml(r.description || "No description.");
+    const repoBtn = r.htmlUrl
+      ? `<a class="btn btn-ghost" href="${escapeHtml(r.htmlUrl)}" rel="noopener noreferrer" target="_blank">Repository</a>`
+      : "";
+    const demoBtn = r.liveUrl
+      ? `<a class="btn btn-primary" href="${escapeHtml(r.liveUrl)}" target="_blank" rel="noopener noreferrer">Open demo</a>`
+      : "";
+
+    return `<article class="project-card${featuredLayout || r.featured ? " featured" : ""}">
+      <div class="project-top">
+        <h3 class="project-name">${
+          r.htmlUrl
+            ? `<a href="${escapeHtml(r.htmlUrl)}" rel="noopener noreferrer" target="_blank">${escapeHtml(r.name)}</a>`
+            : escapeHtml(r.name)
+        }</h3>
+        ${meta}
+      </div>
+      <p class="project-desc">${desc}</p>
+      ${techChips(r.tech)}
+      ${
+        repoBtn || demoBtn
+          ? `<div class="project-actions">${repoBtn}${demoBtn}</div>`
+          : ""
+      }
+    </article>`;
+  }
+
+  function initFeatured() {
+    const grid = $("featured-grid");
+    if (!grid) return;
+    const list = Array.isArray(cfg.featuredProjects) ? cfg.featuredProjects : [];
+    if (!list.length) {
+      grid.hidden = true;
+      return;
+    }
+    grid.innerHTML = list
+      .map((p) =>
+        projectCard(
+          {
+            name: p.name,
+            description: p.description,
+            tech: p.tech,
+            htmlUrl: p.htmlUrl || null,
+            liveUrl: p.liveUrl || null,
+            featured: true,
+          },
+          { featuredLayout: true }
+        )
       )
       .join("");
+  }
+
+  function initContact() {
+    const lead = $("contact-lead");
+    if (lead) {
+      const bits = [];
+      if (cfg.availability) bits.push(cfg.availability + ".");
+      bits.push("Reach out by email or LinkedIn.");
+      lead.textContent = bits.join(" ");
+    }
+    const actions = $("contact-actions");
+    if (!actions) return;
+    const links = [];
+    if (cfg.social?.email) {
+      links.push(
+        `<a class="btn btn-primary" href="mailto:${escapeHtml(cfg.social.email)}">Email me</a>`
+      );
+    }
+    if (cfg.social?.linkedin) {
+      links.push(
+        `<a class="btn btn-ghost" href="${escapeHtml(cfg.social.linkedin)}" rel="noopener noreferrer" target="_blank">LinkedIn</a>`
+      );
+    }
+    if (cfg.social?.github) {
+      links.push(
+        `<a class="btn btn-ghost" href="${escapeHtml(cfg.social.github)}" rel="noopener noreferrer" target="_blank">GitHub</a>`
+      );
+    }
+    actions.innerHTML = links.join("");
   }
 
   async function initResume() {
     const frame = $("resume-frame");
     const status = $("resume-status");
     const download = $("resume-download");
+    const heroResume = $("hero-resume");
     if (!frame || !status) return;
 
     const pdfUrl = "resume.pdf";
+    const downloadName = "Gunasagar_Pullamchetty_Resume.pdf";
     let pdfOk = false;
     try {
       const headRes = await fetch(pdfUrl, { method: "HEAD" });
@@ -93,12 +266,13 @@
         "Add resume.pdf next to index.html to show and download your resume.";
     }
 
-    if (download) {
+    function wireDownload(el) {
+      if (!el) return;
       if (!pdfOk) {
-        download.classList.add("is-disabled");
-        download.setAttribute("aria-disabled", "true");
+        el.classList.add("is-disabled");
+        el.setAttribute("aria-disabled", "true");
       }
-      download.addEventListener("click", async (e) => {
+      el.addEventListener("click", async (e) => {
         e.preventDefault();
         try {
           const r = await fetch(pdfUrl, { method: "HEAD" });
@@ -108,7 +282,7 @@
           }
           const a = document.createElement("a");
           a.href = pdfUrl;
-          a.download = "resume.pdf";
+          a.download = downloadName;
           document.body.appendChild(a);
           a.click();
           a.remove();
@@ -117,6 +291,9 @@
         }
       });
     }
+
+    wireDownload(download);
+    wireDownload(heroResume);
   }
 
   function suggestedPagesUrl(username, repoName) {
@@ -140,6 +317,7 @@
       archived: repo.archived,
       fork: repo.fork,
       liveUrl: liveUrl || null,
+      tech: o.tech || null,
       featured: !!o.featured,
       hidden: !!o.hidden || hiddenRepoNames.has(repo.name),
     };
@@ -156,7 +334,7 @@
     const grid = $("projects-grid");
     if (!grid) return;
     grid.innerHTML =
-      '<p class="section-lead projects-loading" role="status">Loading projects…</p>';
+      '<p class="section-lead projects-loading" role="status">Loading repositories…</p>';
   }
 
   function renderProjects(repos) {
@@ -169,34 +347,11 @@
 
     if (!list.length) {
       grid.innerHTML =
-        '<p class="section-lead" style="margin:0">No projects to show.</p>';
+        '<p class="section-lead" style="margin:0">No public repositories to show.</p>';
       return;
     }
 
-    grid.innerHTML = list
-      .map((r) => {
-        const meta = r.stars != null ? `★ ${r.stars}` : "";
-        const metaHtml = meta
-          ? `<span class="project-meta">${escapeHtml(meta)}</span>`
-          : "";
-        const desc = escapeHtml(r.description || "No description.");
-        const demoBtn = r.liveUrl
-          ? `<a class="btn btn-primary" href="${escapeHtml(r.liveUrl)}" target="_blank" rel="noopener noreferrer">Open demo</a>`
-          : `<button type="button" class="btn btn-ghost" disabled title="No live demo for this project">No demo URL</button>`;
-
-        return `<article class="project-card${r.featured ? " featured" : ""}">
-          <div class="project-top">
-            <h3 class="project-name"><a href="${escapeHtml(r.htmlUrl)}" rel="noopener noreferrer" target="_blank">${escapeHtml(r.name)}</a></h3>
-            ${metaHtml}
-          </div>
-          <p class="project-desc">${desc}</p>
-          <div class="project-actions">
-            <a class="btn btn-ghost" href="${escapeHtml(r.htmlUrl)}" rel="noopener noreferrer" target="_blank">Repository</a>
-            ${demoBtn}
-          </div>
-        </article>`;
-      })
-      .join("");
+    grid.innerHTML = list.map((r) => projectCard(r)).join("");
   }
 
   async function loadReposFromStatic() {
@@ -236,8 +391,7 @@
       });
       if (!res.ok) {
         const remaining = res.headers.get("x-ratelimit-remaining");
-        const isRateLimited =
-          res.status === 403 && remaining === "0";
+        const isRateLimited = res.status === 403 && remaining === "0";
         const msg = isRateLimited
           ? "GitHub API rate limit reached in the browser. Redeploy the site so repos.json is included, or try again later."
           : res.status === 404
@@ -253,6 +407,10 @@
       if (errEl) {
         errEl.hidden = false;
         errEl.textContent = e.message || "Failed to load repositories.";
+      }
+      const grid = $("projects-grid");
+      if (grid && !grid.querySelector(".project-card")) {
+        grid.innerHTML = "";
       }
     }
   }
@@ -270,7 +428,8 @@
     if (el) {
       const y = new Date().getFullYear();
       const n = (cfg.name || "").trim();
-      el.textContent = n ? `© ${y} ${n}` : `© ${y}`;
+      const avail = cfg.availability ? ` · ${cfg.availability}` : "";
+      el.textContent = n ? `© ${y} ${n}${avail}` : `© ${y}`;
     }
   }
 
@@ -316,7 +475,7 @@
       const href = a.getAttribute("href");
       if (href == null || !href.startsWith("#")) return;
 
-      if (href === "#") {
+      if (href === "#" || href === "#top") {
         e.preventDefault();
         elasticScrollTo(0);
         const path = window.location.pathname + window.location.search;
@@ -416,6 +575,11 @@
   }
 
   initHero();
+  initAbout();
+  initExperience();
+  initSkills();
+  initFeatured();
+  initContact();
   void initResume();
   initFooter();
   initElasticNavScroll();

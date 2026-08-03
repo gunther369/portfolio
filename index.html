@@ -5,9 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Portfolio — resume and GitHub projects."
+      content="Gunasagar Pullamchetty — Java Backend Engineer. Distributed systems, Spring Boot, Kafka, and cloud-native microservices."
     />
-    <title>Portfolio</title>
+    <meta property="og:title" content="Gunasagar Pullamchetty · Java Backend Engineer" />
+    <meta
+      property="og:description"
+      content="Designing and scaling distributed, event-driven backends — Java, Spring Boot, Kafka."
+    />
+    <meta property="og:type" content="website" />
+    <title>Gunasagar Pullamchetty · Java Backend Engineer</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -21,28 +27,76 @@
     <div class="noir-vignette" aria-hidden="true"></div>
     <div class="noir-grain" aria-hidden="true"></div>
     <header class="site-header">
-      <a class="logo" href="#">portfolio</a>
+      <a class="logo" href="#top" id="site-logo">GP</a>
       <nav class="nav">
+        <a href="#about">About</a>
+        <a href="#experience">Experience</a>
+        <a href="#projects">Work</a>
         <a href="#resume">Resume</a>
-        <a href="#projects">Projects</a>
       </nav>
     </header>
 
     <main>
       <section class="hero" id="top">
-        <p class="hero-kicker">Hello —</p>
-        <h1 class="hero-name" id="hero-name">Your Name</h1>
-        <p class="hero-title" id="hero-title">Software Developer</p>
+        <p class="hero-kicker" id="hero-kicker"></p>
+        <h1 class="hero-name" id="hero-name">Gunasagar Pullamchetty</h1>
+        <p class="hero-title" id="hero-title">Java Backend Engineer</p>
         <p class="hero-tagline" id="hero-tagline"></p>
-        <div class="hero-actions" id="hero-social"></div>
+        <div class="hero-actions" id="hero-actions"></div>
+        <div class="hero-social" id="hero-social"></div>
+      </section>
+
+      <section class="section" id="about">
+        <div class="section-head">
+          <h2>About</h2>
+        </div>
+        <p class="about-text" id="about-text"></p>
+      </section>
+
+      <section class="section" id="experience">
+        <div class="section-head">
+          <h2>Experience</h2>
+        </div>
+        <div id="experience-list"></div>
+      </section>
+
+      <section class="section" id="skills">
+        <div class="section-head">
+          <h2>Skills</h2>
+        </div>
+        <div class="skills-groups" id="skills-groups"></div>
+      </section>
+
+      <section class="section" id="projects">
+        <div class="section-head">
+          <h2>Selected work</h2>
+          <p class="section-lead">
+            Highlights from platform and tooling work. Public repositories follow below.
+          </p>
+        </div>
+        <div class="projects-grid featured-grid" id="featured-grid"></div>
+
+        <div class="subsection-head">
+          <h3>Repositories</h3>
+        </div>
+        <p class="projects-error" id="projects-error" hidden></p>
+        <div class="projects-grid" id="projects-grid" aria-live="polite"></div>
       </section>
 
       <section class="section" id="resume">
         <div class="section-head">
           <h2>Resume</h2>
+          <p class="section-lead">
+            Full CV as PDF — download for ATS-friendly review, or preview below.
+          </p>
         </div>
         <div class="resume-toolbar">
-          <a class="btn btn-primary" id="resume-download" href="resume.pdf" download>
+          <a
+            class="btn btn-primary"
+            id="resume-download"
+            href="resume.pdf"
+            download="Gunasagar_Pullamchetty_Resume.pdf"
+          >
             Download PDF
           </a>
           <span class="resume-status" id="resume-status"></span>
@@ -57,12 +111,12 @@
         </div>
       </section>
 
-      <section class="section" id="projects">
+      <section class="section" id="contact">
         <div class="section-head">
-          <h2>Projects</h2>
+          <h2>Contact</h2>
         </div>
-        <p class="projects-error" id="projects-error" hidden></p>
-        <div class="projects-grid" id="projects-grid" aria-live="polite"></div>
+        <p class="section-lead" id="contact-lead"></p>
+        <div class="hero-actions" id="contact-actions"></div>
       </section>
     </main>
 
